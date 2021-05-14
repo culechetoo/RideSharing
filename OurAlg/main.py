@@ -1,12 +1,12 @@
 import time
 
-from PrevPaper.Algorithm import run
+from OurAlg.ExactLambdaAlgorithm import run
 
 
-def runInstance(problem, showRunTime=False):
+def runInstance(problem, lamb, showRunTime=False):
     currTime = time.time()
 
-    matching = run(problem)
+    matching = run(problem, lamb)
     if showRunTime:
         print("Algorithm run in %f s" % (time.time() - currTime))
 

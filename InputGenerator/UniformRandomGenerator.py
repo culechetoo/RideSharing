@@ -1,5 +1,5 @@
 from InputGenerator.Utils import getUniformRandomLocation
-from UtilClasses import Driver, Rider
+from Main.UtilClasses import Driver, Rider
 
 
 def uniformGeneration(problemInstance, driverCapacity, inputPrecision):

@@ -1,13 +1,12 @@
-import math
 import random
 
 import numpy as np
 
-from UtilClasses import Location
+from Main.UtilClasses import Location
 
 
 def getUniformRandomLocation(dimX, dimY, precision=2):
-    precisionHelper = math.pow(10, precision)
+    precisionHelper = 10**precision
 
     driverX = float(random.randrange(0, dimX * precisionHelper)) / precisionHelper
     driverY = float(random.randrange(0, dimY * precisionHelper)) / precisionHelper

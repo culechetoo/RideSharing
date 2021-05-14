@@ -2,7 +2,7 @@ import random
 from typing import List
 
 from InputGenerator.Utils import getUniformRandomLocation, getGaussianRandomLocation
-from UtilClasses import Location, Driver, Rider
+from Main.UtilClasses import Location, Driver, Rider
 
 
 def gaussianMixtureGeneration(problemInstance, generatorArgs, driverCapacity, inputPrecision=2):
