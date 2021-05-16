@@ -17,22 +17,36 @@ def run():
                         problemInstance = ProblemInstance((B, B), n, 2*n, 2, distNorm)
                         problemInstance.generateParams(generatorType)
 
-                        lowerBoundCost = getLowerBoundCost(problemInstance, 2)
+                        lowerBoundCost = getLowerBoundCost(problemInstance)
 
                         matching = prevMain.runInstance(problemInstance)
 
-                        matchingCost = getMatchingCost(problemInstance, matching, 2)
+                        matchingCost = getMatchingCost(problemInstance, matching)
                         ratio = round(matchingCost / lowerBoundCost, 2)
 
                         print("PrevPaper distNorm: %s| n: %d| B: %d| ratio: %.2f"
                               % (distNorm, n, B, ratio))
 
-                        matching = ourMain.runInstance(problemInstance, 2)
+                        matching = ourMain.runInstance(problemInstance)
 
-                        matchingCost = getMatchingCost(problemInstance, matching, 2)
+                        matchingCost = getMatchingCost(problemInstance, matching)
                         ratio = round(matchingCost / lowerBoundCost, 2)
                         print("OurAlg distNorm: %s| n: %d| B: %d| lambda: %d| ratio: %.2f"
                               % (distNorm, n, B, 2, ratio))
+
+                        for lamb in [4, 8, 16]:
+
+                            problemInstance = ProblemInstance((B, B), n, lamb*n, lamb, distNorm)
+                            problemInstance.generateParams(generatorType)
+
+                            lowerBoundCost = getLowerBoundCost(problemInstance)
+
+                            matching = ourMain.runInstance(problemInstance)
+
+                            matchingCost = getMatchingCost(problemInstance, matching)
+                            ratio = round(matchingCost / lowerBoundCost, 2)
+                            print("OurAlg distNorm: %s| n: %d| B: %d| lambda: %d| ratio: %.2f"
+                                  % (distNorm, n, B, lamb, ratio))
 
             elif generatorType == "gaussian":
                 for nCenters in [1, 5, 10]:
@@ -41,22 +55,36 @@ def run():
                         problemInstance = ProblemInstance((100, 100), 50, 100, 2, distNorm)
                         problemInstance.generateParams(generatorType, {"nCenters": 5, "variance": variance})
 
-                        lowerBoundCost = getLowerBoundCost(problemInstance, 2)
+                        lowerBoundCost = getLowerBoundCost(problemInstance)
 
                         matching = prevMain.runInstance(problemInstance)
 
-                        matchingCost = getMatchingCost(problemInstance, matching, 2)
+                        matchingCost = getMatchingCost(problemInstance, matching)
                         ratio = round(matchingCost / lowerBoundCost, 2)
                         print("PrevPaper distNorm: %s| nCenters: %d| variance: %d| ratio: %.2f"
                               % (distNorm, nCenters, variance, ratio))
 
-                        matching = ourMain.runInstance(problemInstance, 2)
+                        matching = ourMain.runInstance(problemInstance)
 
-                        matchingCost = getMatchingCost(problemInstance, matching, 2)
+                        matchingCost = getMatchingCost(problemInstance, matching)
                         ratio = round(matchingCost / lowerBoundCost, 2)
                         print(
                             "OurAlg distNorm: %s| nCenters: %d| variance: %d| lambda: %d| ratio: %.2f"
                             % (distNorm, nCenters, 2, variance, ratio))
+
+                        for lamb in [4, 8, 16]:
+
+                            problemInstance = ProblemInstance((100, 100), 50, 50*lamb, lamb, distNorm)
+                            problemInstance.generateParams(generatorType)
+
+                            lowerBoundCost = getLowerBoundCost(problemInstance)
+
+                            matching = ourMain.runInstance(problemInstance)
+
+                            matchingCost = getMatchingCost(problemInstance, matching)
+                            ratio = round(matchingCost / lowerBoundCost, 2)
+                            print("OurAlg distNorm: %s| n: %d| B: %d| lambda: %d| ratio: %.2f"
+                                  % (distNorm, nCenters, lamb, variance, ratio))
 
 
 run()

@@ -37,12 +37,12 @@ def constructPartitionGraph(partitions: List[Tuple[Request]], distNorm="l2"):
     return graph
 
 
-def getExactPartition(problemInstance, partitionSize):
+def getExactPartition(problemInstance):
     partitions: List[List[Tuple[Request]]] = [initPartition(problemInstance)]
 
     i = 0
 
-    while i < math.log2(partitionSize):
+    while i < math.log2(problemInstance.driverCapacity):
         i += 1
         partition_i: List[Tuple[Request]] = []
 
@@ -79,21 +79,8 @@ def getDriverGroupMatching(problemInstance, partition):
     return driverGroupMatching
 
 
-def run(problemInstance, partitionSize):
-    partition = getExactPartition(problemInstance, partitionSize)
+def run(problemInstance):
+    partition = getExactPartition(problemInstance)
     driverGroupMatching = getDriverGroupMatching(problemInstance, partition)
 
     return driverGroupMatching
-
-
-def getOverallMst(requestTuple, distNorm="l2"):
-    x = []
-    y = []
-
-    for request in requestTuple:
-        x.append(request.sourceLocation.x)
-        x.append(request.targetLocation.x)
-        y.append(request.sourceLocation.y)
-        y.append(request.targetLocation.y)
-
-    return mst(x, y, distNorm)

@@ -1,3 +1,4 @@
+from itertools import combinations
 from typing import List
 
 import networkx as nx
@@ -25,10 +26,37 @@ def createDriverSetRequestGraph(problemInstance):
     graph.add_node("driverSet")
 
     for request in problemInstance.riders:
-        graph.add_node(request)
+        graph.add_node(str(request.sourceLocation))
 
-        edgeWeight = getMinRequestDriverSetDistance(request, problemInstance.drivers, problemInstance.distNorm)
-        graph.add_edge("driverSet", request, weight=edgeWeight)
+        edgeWeight = min([request.sourceLocation.getDistance(driver.location, problemInstance.distNorm)
+                          for driver in problemInstance.drivers])
+        graph.add_edge("driverSet", str(request.sourceLocation), weight=edgeWeight)
+
+        graph.add_node(str(request.targetLocation))
+
+        edgeWeight = min([request.targetLocation.getDistance(driver.location, problemInstance.distNorm)
+                          for driver in problemInstance.drivers])
+        graph.add_edge("driverSet", str(request.targetLocation), weight=edgeWeight)
+
+        graph.add_edge(str(request.sourceLocation), str(request.targetLocation),
+                       weight=request.sourceLocation.getDistance(request.targetLocation, problemInstance.distNorm))
+
+    for requestPair in combinations(problemInstance.riders, 2):
+
+        request1: Rider = requestPair[0]
+        request2: Rider = requestPair[1]
+
+        graph.add_edge(str(request1.sourceLocation), str(request2.sourceLocation),
+                       weight=request1.sourceLocation.getDistance(request2.sourceLocation, problemInstance.distNorm))
+
+        graph.add_edge(str(request1.sourceLocation), str(request2.targetLocation),
+                       weight=request1.sourceLocation.getDistance(request2.targetLocation, problemInstance.distNorm))
+
+        graph.add_edge(str(request2.sourceLocation), str(request1.sourceLocation),
+                       weight=request2.sourceLocation.getDistance(request1.sourceLocation, problemInstance.distNorm))
+
+        graph.add_edge(str(request2.sourceLocation), str(request1.targetLocation),
+                       weight=request2.sourceLocation.getDistance(request1.targetLocation, problemInstance.distNorm))
 
     return graph
 
@@ -90,7 +118,9 @@ def calcRiderMatchingCost(problemInstance, riderMatching):
     return riderMatchingCost
 
 
-def getLowerBoundCost(problemInstance, lamb):
+def getLowerBoundCost(problemInstance):
+
+    lamb = problemInstance.driverCapacity
 
     if lamb == 2:
         riderMatching = getRiderMatching(problemInstance, getBestRiderPairCostMin)

@@ -7,6 +7,19 @@ from networkx import minimum_spanning_tree
 from Main.UtilClasses import Rider as Request, Location
 
 
+def getOverallMst(requestTuple, distNorm="l2"):
+    x = []
+    y = []
+
+    for request in requestTuple:
+        x.append(request.sourceLocation.x)
+        x.append(request.targetLocation.x)
+        y.append(request.sourceLocation.y)
+        y.append(request.targetLocation.y)
+
+    return mst(x, y, distNorm)
+
+
 def mst_st(requestGroup, distNorm="l2"):
 
     return mst_s(requestGroup, distNorm)+mst_t(requestGroup, distNorm)

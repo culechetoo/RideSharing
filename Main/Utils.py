@@ -3,7 +3,7 @@ from typing import Tuple
 import networkx as nx
 
 from Main.UtilClasses import Driver, Rider
-from OurAlg.Utils import mst_st
+from OurAlg.Utils import mst_st, getOverallMst
 import PrevPaper.Algorithm as prevPaper
 
 
@@ -47,7 +47,7 @@ def getBestDriverRequestGroupCost(driver, requestGroup, distNorm="l2"):
     return edgeWeight
 
 
-def getMatchingCost(problemInstance, matching, lamb):
+def getMatchingCost(problemInstance, matching):
 
     totalCost = 0.0
 
@@ -60,11 +60,12 @@ def getMatchingCost(problemInstance, matching, lamb):
             riderTuple = match[1]
             driver: Driver = match[0]
 
-        if lamb == 2:
+        if problemInstance.driverCapacity == 2:
             riderCost = prevPaper.getBestRiderPairCostMax(riderTuple[0], riderTuple[1], problemInstance.distNorm)
         else:
             riderCost = 2*mst_st(riderTuple, problemInstance.distNorm) + \
                         getMinDistSt(riderTuple, problemInstance.distNorm)
+            # riderCost = 2*getOverallMst(riderTuple, problemInstance.distNorm)
 
         driverCost = getBestDriverRequestGroupCost(driver, riderTuple, problemInstance.distNorm)
 

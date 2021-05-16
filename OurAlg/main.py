@@ -3,10 +3,10 @@ import time
 from OurAlg.ExactLambdaAlgorithm import run
 
 
-def runInstance(problem, lamb, showRunTime=False):
+def runInstance(problem, showRunTime=False):
     currTime = time.time()
 
-    matching = run(problem, lamb)
+    matching = run(problem)
     if showRunTime:
         print("Algorithm run in %f s" % (time.time() - currTime))
 
