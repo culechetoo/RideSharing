@@ -1,10 +1,12 @@
 import itertools
-from typing import List
+from typing import List, FrozenSet, Tuple
 
 import networkx as nx
 from networkx import minimum_spanning_tree
 
-from Main.UtilClasses import Rider as Request, Location
+from Main.UtilClasses import Rider as Request, Location, Rider
+
+mstCache = {}
 
 
 def getOverallMst(requestTuple, distNorm="l2"):
@@ -17,7 +19,9 @@ def getOverallMst(requestTuple, distNorm="l2"):
         y.append(request.sourceLocation.y)
         y.append(request.targetLocation.y)
 
-    return mst(x, y, distNorm)
+    graph = constructCompleteGraph(x, y, distNorm)
+
+    return mst(graph).size(weight="weight")
 
 
 def mst_st(requestGroup, distNorm="l2"):
@@ -25,7 +29,13 @@ def mst_st(requestGroup, distNorm="l2"):
     return mst_s(requestGroup, distNorm)+mst_t(requestGroup, distNorm)
 
 
-def mst_s(requestGroup: List[Request], distNorm="l2"):
+def mst_s(requestGroup: FrozenSet[Request], distNorm="l2"):
+
+    if len(requestGroup) == 1:
+        return 0
+    if len(requestGroup) == 2:
+        request1, request2 = requestGroup
+        return request1.sourceLocation.getDistance(request2.sourceLocation, distNorm)
 
     x: List[float] = []
     y: List[float] = []
@@ -34,10 +44,18 @@ def mst_s(requestGroup: List[Request], distNorm="l2"):
         x.append(request.sourceLocation.x)
         y.append(request.sourceLocation.y)
 
-    return mst(x, y, distNorm)
+    graph = constructCompleteGraph(x, y, distNorm)
+
+    return mst(graph).size(weight="weight")
 
 
-def mst_t(requestGroup, distNorm="l2"):
+def mst_t(requestGroup: FrozenSet[Request], distNorm="l2"):
+
+    if len(requestGroup) == 1:
+        return 0
+    if len(requestGroup) == 2:
+        request1, request2 = requestGroup
+        return request1.targetLocation.getDistance(request2.targetLocation, distNorm)
 
     x: List[float] = []
     y: List[float] = []
@@ -46,7 +64,9 @@ def mst_t(requestGroup, distNorm="l2"):
         x.append(request.targetLocation.x)
         y.append(request.targetLocation.y)
 
-    return mst(x, y, distNorm)
+    graph = constructCompleteGraph(x, y, distNorm)
+
+    return mst(graph).size(weight="weight")
 
 
 def constructCompleteGraph(x, y, distNorm="l2"):
@@ -55,6 +75,8 @@ def constructCompleteGraph(x, y, distNorm="l2"):
     graph.add_nodes_from(range(len(x)))
 
     indexPairs = itertools.combinations(range(len(x)), 2)
+
+    edges = []
 
     for indexPair in indexPairs:
 
@@ -71,14 +93,102 @@ def constructCompleteGraph(x, y, distNorm="l2"):
 
         dist = location1.getDistance(location2, distNorm)
 
-        graph.add_edge(index1, index2, weight=dist)
+        edges.append((index1, index2, dist))
+
+    graph.add_weighted_edges_from(edges)
 
     return graph
 
 
-def mst(x, y, distNorm="l2"):
-
-    graph = constructCompleteGraph(x, y, distNorm)
+def mst(graph):
     mstGraph = minimum_spanning_tree(graph)
 
-    return mstGraph.size(weight="weight")
+    return mstGraph
+
+
+def getDistRequestGroups(requestGroup1: FrozenSet[Request], requestGroup2: FrozenSet[Request], distNorm="l2"):
+
+    union = requestGroup1.union(requestGroup2)
+
+    if requestGroup1 not in mstCache:
+        mstCache[requestGroup1] = mst_st(requestGroup1, distNorm)
+    if requestGroup2 not in mstCache:
+        mstCache[requestGroup2] = mst_st(requestGroup2, distNorm)
+    if union not in mstCache:
+        mstCache[union] = mst_st(union, distNorm)
+
+    edgeWeight = mstCache[union] - mstCache[requestGroup1] - mstCache[requestGroup2]
+
+    return edgeWeight
+
+
+def getDistRequestGroupSets(requestGroupSet1, requestGroupSet2, distNorm="l2"):
+    edgeWeight = 1e9
+    groups = ()
+    method = ""
+
+    for requestGroup1 in requestGroupSet1:
+        for requestGroup2 in requestGroupSet2:
+            w1 = getDistRequestGroups(requestGroup1, requestGroup2, distNorm)
+            w2 = w_2(requestGroup1, requestGroup2, distNorm)
+
+            if w2 < edgeWeight:
+                groups = (requestGroup1, requestGroup2)
+                edgeWeight = w2
+                method = "w2"
+            if w1 <= edgeWeight:
+                groups = (requestGroup1, requestGroup2)
+                edgeWeight = w1
+                method = "w1"
+
+    return edgeWeight, groups, method
+
+
+def w_2(requestGroup1, requestGroup2, distNorm="l2"):
+    minVal1 = 1e9
+
+    for request in requestGroup1:
+        minVal1 = min(minVal1, request.sourceLocation.getDistance(request.targetLocation, distNorm))
+
+    minVal2 = 1e9
+    for request in requestGroup2:
+        minVal2 = min(minVal2, request.sourceLocation.getDistance(request.targetLocation, distNorm))
+
+    return minVal1+minVal2
+
+
+def getRequestGroupWalkCost(requestGroup, distNorm="l2"):
+
+    cost = 2 * mst_st(requestGroup, distNorm) + getMinDistSt(requestGroup, distNorm)
+
+    return cost
+
+
+def getAssignmentCostUnbounded(driverGroupMatching, distNorm="l2"):
+
+    forestEdgeCost = 0
+    intraGroupCost = 0
+
+    for driver, riderGroupTree, riderSource in driverGroupMatching:
+        forestEdgeCost += driver.location.getDistance(riderSource.sourceLocation, distNorm)
+        forestEdgeCost += riderGroupTree.size(weight="weight")
+
+        for node, degree in riderGroupTree.out_degree:
+            if degree == 0:
+                intraGroupCost += 3*getRequestGroupWalkCost(node, distNorm)
+            else:
+                intraGroupCost += 5*getRequestGroupWalkCost(node, distNorm)
+
+    return forestEdgeCost + intraGroupCost
+
+
+def getMinDistSt(riderTuple: Tuple[Rider], distNorm):
+
+    minDist = riderTuple[0].sourceLocation.getDistance(riderTuple[0].targetLocation, distNorm)
+
+    for riderIndex1 in range(len(riderTuple)):
+        for riderIndex2 in range(len(riderTuple)):
+            minDist = min(minDist, riderTuple[riderIndex1].sourceLocation.getDistance(
+                riderTuple[riderIndex2].targetLocation, distNorm))
+
+    return minDist

@@ -1,9 +1,11 @@
 import math
+import time
 from itertools import combinations
-from typing import List, Tuple
+from typing import List, FrozenSet, Tuple
 
-from OurAlg.Utils import mst_st, mst
-from Main.UtilClasses import Rider as Request, Rider
+import OurAlg.Utils
+from OurAlg.Utils import getDistRequestGroups
+from Main.UtilClasses import Rider as Request, Rider, Driver
 
 import networkx as nx
 
@@ -14,60 +16,85 @@ def initPartition(problemInstance):
     partition = []
 
     for request in problemInstance.riders:
-        partition.append((request,))
+        partition.append(frozenset({request}))
 
     return partition
 
 
-def constructPartitionGraph(partitions: List[Tuple[Request]], distNorm="l2"):
+def constructPartitionGraph(partitions: List[FrozenSet[Request]], distNorm="l2"):
+
     graph = nx.Graph()
-    graph.add_nodes_from(partitions)
+    graph.add_nodes_from(range(len(partitions)))
 
-    partitionPairs = combinations(partitions, 2)
+    partitionIndexPairs = combinations(range(len(partitions)), 2)
 
-    for partitionPair in partitionPairs:
-        partition1 = partitionPair[0]
-        partition2 = partitionPair[1]
+    edges = []
 
-        edgeWeight = mst_st(partition1 + partition2, distNorm) - mst_st(partition1, distNorm) - \
-                     mst_st(partition2, distNorm)
+    for partitionIndex1, partitionIndex2 in partitionIndexPairs:
+        partition1 = partitions[partitionIndex1]
+        partition2 = partitions[partitionIndex2]
 
-        graph.add_edge(partition1, partition2, weight=edgeWeight)
+        edgeWeight = getDistRequestGroups(partition1, partition2, distNorm)
+
+        edges.append((partitionIndex1, partitionIndex2, edgeWeight))
+
+    graph.add_weighted_edges_from(edges)
 
     return graph
 
 
-def getExactPartition(problemInstance):
-    partitions: List[List[Tuple[Request]]] = [initPartition(problemInstance)]
+def getExactPartition(problemInstance, showRunTime=False):
+
+    partitions: List[List[FrozenSet[Request]]] = [initPartition(problemInstance)]
 
     i = 0
 
     while i < math.log2(problemInstance.driverCapacity):
         i += 1
-        partition_i: List[Tuple[Request]] = []
+        partition_i: List[FrozenSet[Request]] = []
 
+        currTime = time.time()
         graph_i = constructPartitionGraph(partitions[-1], problemInstance.distNorm)
-        matching = getMinWeightPerfectMatching(graph_i)
+        if showRunTime:
+            print("graph constructed in %f" % (time.time()-currTime))
 
-        for groupPair in matching:
-            partition_i.append(groupPair[0] + groupPair[1])
+        currTime = time.time()
+        matching = getMinWeightPerfectMatching(graph_i)
+        if showRunTime:
+            print("matching found in %f" % (time.time()-currTime))
+
+        for partitionIndex1, partitionIndex2 in matching:
+            partition_i.append(partitions[-1][partitionIndex1].union(partitions[-1][partitionIndex2]))
 
         partitions.append(partition_i)
 
-    return partitions[-1]
+    exactPartition = partitions[-1]
+
+    exactPartition = [tuple(requestGroup) for requestGroup in exactPartition]
+
+    return exactPartition
 
 
 def getDriverGroupGraph(problemInstance, partition: List[Tuple[Rider]]):
     graph = nx.Graph()
 
-    graph.add_nodes_from(problemInstance.drivers)
-    graph.add_nodes_from(partition)
+    riderGroupBaseIndex = problemInstance.nDrivers
 
-    for driver in problemInstance.drivers:
-        for group in partition:
+    graph.add_nodes_from(range(problemInstance.nDrivers))
+    graph.add_nodes_from(range(riderGroupBaseIndex, riderGroupBaseIndex+len(partition)))
+
+    edges = []
+
+    for driverIndex in range(problemInstance.nDrivers):
+        for groupIndex in range(len(partition)):
+            driver: Driver = problemInstance.drivers[driverIndex]
+            group = partition[groupIndex]
+
             edgeWeight = getBestDriverRequestGroupCost(driver, group, problemInstance.distNorm)
 
-            graph.add_edge(driver, group, weight=edgeWeight)
+            edges.append((driverIndex, groupIndex+riderGroupBaseIndex, edgeWeight))
+
+    graph.add_weighted_edges_from(edges)
 
     return graph
 
@@ -76,11 +103,36 @@ def getDriverGroupMatching(problemInstance, partition):
     graph = getDriverGroupGraph(problemInstance, partition)
     driverGroupMatching = getMinWeightPerfectMatching(graph)
 
-    return driverGroupMatching
+    finalMatching = []
+
+    riderGroupBaseIndex = problemInstance.nDrivers
+
+    for index1, index2 in driverGroupMatching:
+        if index1 >= riderGroupBaseIndex:
+            groupIndex = index1-riderGroupBaseIndex
+            driverIndex = index2
+        else:
+            groupIndex = index2-riderGroupBaseIndex
+            driverIndex = index1
+
+        group = partition[groupIndex]
+        driver = problemInstance.drivers[driverIndex]
+
+        finalMatching.append((driver, group))
+
+    return finalMatching
 
 
-def run(problemInstance):
-    partition = getExactPartition(problemInstance)
+def run(problemInstance, showRunTime=False):
+
+    OurAlg.Utils.mstCache.clear()
+
+    currTime = time.time()
+
+    partition = getExactPartition(problemInstance, showRunTime)
+    if showRunTime:
+        print("partition found in %f" % (time.time()-currTime))
+
     driverGroupMatching = getDriverGroupMatching(problemInstance, partition)
 
     return driverGroupMatching

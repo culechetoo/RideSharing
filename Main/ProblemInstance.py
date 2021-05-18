@@ -17,14 +17,15 @@ class ProblemInstance:
     inputPrecision: int
     driverCapacity: int
 
-    def __init__(self, graph_dim: (int, int), n_drivers: int, n_riders: int, driverCapacity: int, distNorm: str = "l2",
-                 inputPrecision: int = 2):
+    def __init__(self, graph_dim: (int, int), n_drivers: int, n_riders: int, driverCapacity: int, exact: bool = True,
+                 distNorm: str = "l2", inputPrecision: int = 2):
         self.graphDim = graph_dim
         self.nDrivers = n_drivers
         self.nRiders = n_riders
         self.drivers = []
         self.riders = []
         self.distNorm = distNorm
+        self.exact = exact
         self.driverCapacity = driverCapacity
         self.inputPrecision = inputPrecision
 
