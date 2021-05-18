@@ -44,18 +44,22 @@ def getBestRiderPairCostMin(rider1: Rider, rider2: Rider, distNorm):
 def generateRiderPairGraph(problemInstance, edgeWeightFunction):
 
     graph = nx.Graph()
-    graph.add_nodes_from(problemInstance.riders)
+    graph.add_nodes_from(range(problemInstance.nRiders))
 
-    riderPairs = combinations(problemInstance.riders, 2)
+    riderIndexPairs = combinations(range(problemInstance.nRiders), 2)
 
-    for riderPair in riderPairs:
+    edges = []
 
-        rider1: Rider = riderPair[0]
-        rider2: Rider = riderPair[1]
+    for riderIndex1, riderIndex2 in riderIndexPairs:
+
+        rider1: Rider = problemInstance.riders[riderIndex1]
+        rider2: Rider = problemInstance.riders[riderIndex2]
 
         edgeWeight = edgeWeightFunction(rider1, rider2, problemInstance.distNorm)
         
-        graph.add_edge(rider1, rider2, weight=edgeWeight)
+        edges.append((riderIndex1, riderIndex2, edgeWeight))
+
+    graph.add_weighted_edges_from(edges)
 
     return graph
 
@@ -65,25 +69,41 @@ def getRiderMatching(problemInstance, edgeWeightFunction):
     graph = generateRiderPairGraph(problemInstance, edgeWeightFunction)
     matching = getMinWeightPerfectMatching(graph)
 
-    return matching
+    finalMatching = []
+
+    for riderIndex1, riderIndex2 in matching:
+
+        rider1 = problemInstance.riders[riderIndex1]
+        rider2 = problemInstance.riders[riderIndex2]
+
+        finalMatching.append((rider1, rider2))
+
+    return finalMatching
 
 
 def generateDriverRiderPairGraph(problemInstance, riderMatching):
 
     graph = nx.Graph()
 
-    graph.add_nodes_from(problemInstance.drivers)
-    graph.add_nodes_from(riderMatching)
+    graphRiderIndexBase = problemInstance.nDrivers
 
-    for driver in problemInstance.drivers:
-        for riderPair in riderMatching:
+    graph.add_nodes_from(range(problemInstance.nDrivers))
+    graph.add_nodes_from(range(graphRiderIndexBase, graphRiderIndexBase+len(riderMatching)))
 
-            rider1: Rider = riderPair[0]
-            rider2: Rider = riderPair[1]
+    edges = []
+
+    for driverIndex in range(problemInstance.nDrivers):
+        driver: Driver = problemInstance.drivers[driverIndex]
+
+        for riderMatchingIndex in range(len(riderMatching)):
+
+            rider1, rider2 = riderMatching[riderMatchingIndex]
 
             edgeWeight = getBestDriverRequestGroupCost(driver, (rider1, rider2), problemInstance.distNorm)
 
-            graph.add_edge(driver, riderPair, weight=edgeWeight)
+            edges.append((driverIndex, riderMatchingIndex+graphRiderIndexBase, edgeWeight))
+
+    graph.add_weighted_edges_from(edges)
 
     return graph
 
@@ -93,7 +113,24 @@ def getDriverRiderMatching(problemInstance, riderMatching):
     graph = generateDriverRiderPairGraph(problemInstance, riderMatching)
     matching = getMinWeightPerfectMatching(graph)
 
-    return matching
+    finalMatching = []
+
+    graphRiderIndexBase = problemInstance.nDrivers
+
+    for index1, index2 in matching:
+        if index1 >= graphRiderIndexBase:
+            riderMatchingIndex = index1 - graphRiderIndexBase
+            driverIndex = index2
+        else:
+            riderMatchingIndex = index2 - graphRiderIndexBase
+            driverIndex = index1
+
+        driver = problemInstance.drivers[driverIndex]
+        rider1, rider2 = riderMatching[riderMatchingIndex]
+
+        finalMatching.append((driver, (rider1, rider2)))
+
+    return finalMatching
 
 
 def run(problemInstance):

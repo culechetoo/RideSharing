@@ -1,9 +1,7 @@
-from typing import Tuple
-
 import networkx as nx
 
-from Main.UtilClasses import Driver, Rider
-from OurAlg.Utils import mst_st, getOverallMst
+from Main.UtilClasses import Driver
+from OurAlg.Utils import getAssignmentCostUnbounded, getRequestGroupWalkCost
 import PrevPaper.Algorithm as prevPaper
 
 
@@ -29,12 +27,11 @@ def getPathWeight(path, distanceType):
 
 def getMinWeightPerfectMatching(graph):
 
-    graphCopy = graph.copy()
-
-    for node1, node1, data in graphCopy.edges(data=True):
+    for node1, node1, data in graph.edges(data=True):
         data["weight"] = -data["weight"]
 
-    matching = nx.algorithms.max_weight_matching(graphCopy, maxcardinality=True)
+    matching = nx.algorithms.max_weight_matching(graph, maxcardinality=True)
+
     return matching
 
 
@@ -49,38 +46,30 @@ def getBestDriverRequestGroupCost(driver, requestGroup, distNorm="l2"):
 
 def getMatchingCost(problemInstance, matching):
 
-    totalCost = 0.0
+    if problemInstance.exact:
 
-    for match in matching:
+        totalCost = 0.0
 
-        if type(match[0]) == tuple:
-            riderTuple = match[0]
-            driver: Driver = match[1]
-        else:
-            riderTuple = match[1]
-            driver: Driver = match[0]
+        for match in matching:
 
-        if problemInstance.driverCapacity == 2:
-            riderCost = prevPaper.getBestRiderPairCostMax(riderTuple[0], riderTuple[1], problemInstance.distNorm)
-        else:
-            riderCost = 2*mst_st(riderTuple, problemInstance.distNorm) + \
-                        getMinDistSt(riderTuple, problemInstance.distNorm)
-            # riderCost = 2*getOverallMst(riderTuple, problemInstance.distNorm)
+            if type(match[0]) == tuple:
+                riderTuple = match[0]
+                driver: Driver = match[1]
+            else:
+                riderTuple = match[1]
+                driver: Driver = match[0]
 
-        driverCost = getBestDriverRequestGroupCost(driver, riderTuple, problemInstance.distNorm)
+            if problemInstance.driverCapacity == 2:
+                riderCost = prevPaper.getBestRiderPairCostMax(riderTuple[0], riderTuple[1], problemInstance.distNorm)
+            else:
+                riderCost = getRequestGroupWalkCost(riderTuple, distNorm=problemInstance.distNorm)
+                # riderCost = 2*getOverallMst(riderTuple, problemInstance.distNorm)
 
-        totalCost += riderCost+driverCost
+            driverCost = getBestDriverRequestGroupCost(driver, riderTuple, problemInstance.distNorm)
+
+            totalCost += riderCost+driverCost
+
+    else:
+        totalCost = getAssignmentCostUnbounded(matching, problemInstance.distNorm)
 
     return totalCost
-
-
-def getMinDistSt(riderTuple: Tuple[Rider], distNorm):
-
-    minDist = riderTuple[0].sourceLocation.getDistance(riderTuple[0].targetLocation, distNorm)
-
-    for riderIndex1 in range(len(riderTuple)):
-        for riderIndex2 in range(len(riderTuple)):
-            minDist = min(minDist, riderTuple[riderIndex1].sourceLocation.getDistance(
-                riderTuple[riderIndex2].targetLocation, distNorm))
-
-    return minDist
