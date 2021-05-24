@@ -62,7 +62,7 @@ def getMatchingCost(problemInstance, matching):
             if problemInstance.driverCapacity == 2:
                 riderCost = prevPaper.getBestRiderPairCostMax(riderTuple[0], riderTuple[1], problemInstance.distNorm)
             else:
-                riderCost = getRequestGroupWalkCost(riderTuple, distNorm=problemInstance.distNorm)
+                riderCost = getRequestGroupWalkCost(riderTuple, driver.location, distNorm=problemInstance.distNorm)
                 # riderCost = 2*getOverallMst(riderTuple, problemInstance.distNorm)
 
             driverCost = getBestDriverRequestGroupCost(driver, riderTuple, problemInstance.distNorm)

@@ -129,5 +129,5 @@ def boundedRun():
                               % (distNorm, nCenters, 2, variance, ratio))
 
 
-# exactRun()
-boundedRun()
+exactRun()
+# boundedRun()
