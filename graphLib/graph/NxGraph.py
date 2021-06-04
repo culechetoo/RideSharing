@@ -8,19 +8,17 @@ import networkx as nx
 
 class NxGraph(BaseGraph):
 
-    lib = "networkx"
-    graph: nx.Graph
-
     def __init__(self):
         self._graph = nx.Graph()
+        self._lib = "networkx"
 
     @property
     def graph(self):
         return self._graph
 
-    @graph.setter
-    def graph(self, value):
-        pass
+    @property
+    def lib(self):
+        return self._lib
 
     def getGraph(self):
         return self.graph

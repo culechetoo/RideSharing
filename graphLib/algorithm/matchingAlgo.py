@@ -1,7 +1,11 @@
 import networkx as nx
+from graphLib.graph.BaseGraph import BaseGraph
 
 
-def nxMatching(graph: nx.Graph, perfect: bool = True, weight: str = "weight", minimum: bool = True):
+def nxMatching(graph: BaseGraph, perfect: bool = True, weight: str = "weight", minimum: bool = True):
+
+    assert graph.lib == "networkx"
+    graph = graph.getGraph()
 
     if minimum:
         for _, _, data in graph.edges(data=True):

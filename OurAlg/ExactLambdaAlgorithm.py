@@ -50,7 +50,7 @@ def getExactPartition(problemInstance, showRunTime=False):
 
         currTime = time.time()
         matchingAlgorithm = graphLib.getMatching(graphLibrary)
-        matching = matchingAlgorithm(graph_i.getGraph())
+        matching = matchingAlgorithm(graph_i)
         if showRunTime:
             print("graphAlg found in %f" % (time.time() - currTime))
 
@@ -85,7 +85,7 @@ def getDriverGroupGraph(problemInstance, partition: List[Tuple[Rider]]):
 def getDriverGroupMatching(problemInstance, partition):
     graph = getDriverGroupGraph(problemInstance, partition)
     matchingAlgorithm = graphLib.getMatching(graphLibrary)
-    driverGroupMatching = matchingAlgorithm(graph.getGraph())
+    driverGroupMatching = matchingAlgorithm(graph)
 
     finalMatching = []
 
