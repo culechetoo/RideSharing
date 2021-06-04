@@ -5,12 +5,14 @@ import networkx as nx
 from networkx import minimum_spanning_tree
 
 from Main.UtilClasses import Rider as Request, Location, Rider
-from OurAlg.tsp import getPathNearestNeighbourRequests
+from OurAlg.TSP.NearestNeighbour import getPathNearestNeighbourRequests
+
+from OurAlg.TSP.BruteForce import getPathBruteForce
 
 mstCache = {}
 
 
-def getOverallMst(requestTuple, distNorm="l2"):
+def getOverallMstRequestTuple(requestTuple, distNorm="l2"):
     x = []
     y = []
 
@@ -118,9 +120,12 @@ def getDistRequestGroups(requestGroup1: FrozenSet[Request], requestGroup2: Froze
     if union not in mstCache:
         mstCache[union] = mst_st(union, distNorm)
 
-    edgeWeight = mstCache[union] - mstCache[requestGroup1] - mstCache[requestGroup2]
+    dist = mstCache[union] - mstCache[requestGroup1] - mstCache[requestGroup2]
 
-    return edgeWeight
+    del mstCache[requestGroup2]
+    del mstCache[requestGroup1]
+
+    return dist
 
 
 def getDistRequestGroupSets(requestGroupSet1, requestGroupSet2, distNorm="l2"):
@@ -158,31 +163,37 @@ def w_2(requestGroup1, requestGroup2, distNorm="l2"):
     return minVal1+minVal2
 
 
-def getRequestGroupWalkCost(requestGroup, sourceLocation, distNorm="l2"):
+def getRequestGroupWalkCost(requestGroup, driver, distNorm="l2"):
 
     # cost = 2 * mst_st(requestGroup, distNorm) + getMinDistSt(requestGroup, distNorm)
-    _, cost = getPathNearestNeighbourRequests(requestGroup, sourceLocation, distNorm)
+    if len(requestGroup) == 2:
+        walk, cost = getPathBruteForce(requestGroup, driver.location, distNorm)
+    else:
+        walk, cost = getPathNearestNeighbourRequests(requestGroup, driver.location, distNorm)
 
-    return cost
+    return [driver]+walk, cost
 
 
-def getAssignmentCostUnbounded(driverGroupMatching, distNorm="l2"):
+def getBoundedAssignmentWalks(driverGroupMatching, distNorm="l2"):
 
-    forestEdgeCost = 0
-    intraGroupCost = 0
+    driverRequests = {}
 
-    # TODO
-    # for driver, riderGroupTree, riderSource in driverGroupMatching:
-    #     forestEdgeCost += driver.location.getDistance(riderSource.sourceLocation, distNorm)
-    #     forestEdgeCost += riderGroupTree.size(weight="weight")
-    #
-    #     for node, degree in riderGroupTree.out_degree:
-    #         if degree == 0:
-    #             intraGroupCost += 3*getRequestGroupWalkCost(node, distNorm)
-    #         else:
-    #             intraGroupCost += 5*getRequestGroupWalkCost(node, distNorm)
+    for driver, riderGroupTree, _ in driverGroupMatching:
+        if driver not in driverRequests:
+            driverRequests[driver] = []
+        for requestGroup in riderGroupTree.nodes:
+            driverRequests[driver].extend(requestGroup)
 
-    return forestEdgeCost + intraGroupCost
+    walks = []
+    costs = []
+
+    for driver, requestGroup in driverRequests.items():
+
+        walk, driverGroupCost = getRequestGroupWalkCost(requestGroup, driver, distNorm)[1]
+        costs.append(driverGroupCost)
+        walk.append(walks)
+
+    return walks, costs
 
 
 def getMinDistSt(riderTuple: Tuple[Rider], distNorm):
