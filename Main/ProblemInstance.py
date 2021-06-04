@@ -3,8 +3,7 @@ from typing import List
 # import networkx as nx
 
 from InputGenerator import UniformRandomGenerator, GaussianRandomGenerator
-from UtilClasses import Driver, Rider
-from Utils import getPathWeight
+from Main.UtilClasses import Driver, Rider
 
 
 class ProblemInstance:
@@ -16,8 +15,10 @@ class ProblemInstance:
     distNorm: str
     inputPrecision: int
     driverCapacity: int
+    generatorType: str
+    generatorArgs: dict
 
-    def __init__(self, graph_dim: (int, int), n_drivers: int, n_riders: int, driverCapacity: int, exact: bool = True,
+    def __init__(self, graph_dim: (int, int), n_drivers: int, n_riders: int, driverCapacity: int,
                  distNorm: str = "l2", inputPrecision: int = 2):
         self.graphDim = graph_dim
         self.nDrivers = n_drivers
@@ -25,11 +26,13 @@ class ProblemInstance:
         self.drivers = []
         self.riders = []
         self.distNorm = distNorm
-        self.exact = exact
         self.driverCapacity = driverCapacity
         self.inputPrecision = inputPrecision
 
     def generateParams(self, generatorType: str, generatorArgs: dict = None):
+        self.generatorType = generatorType
+        self.generatorArgs = generatorArgs
+
         if generatorType == "uniform":
             UniformRandomGenerator.uniformGeneration(self, self.driverCapacity, self.inputPrecision)
 
@@ -37,35 +40,11 @@ class ProblemInstance:
             GaussianRandomGenerator.gaussianMixtureGeneration(self, generatorArgs, self.driverCapacity,
                                                               self.inputPrecision)
 
-    def getMatchingCost(self, matching):
+    def getConfigString(self):
 
-        cost = 0.0
-        for match in matching:
-
-            if type(match[0]) == tuple:
-                riderTuple = match[0]
-                driverIndex = match[1]
-            else:
-                riderTuple = match[1]
-                driverIndex = match[0]
-
-            driver: Driver = self.drivers[driverIndex]
-            rider1: Rider = self.riders[riderTuple[0]]
-            rider2: Rider = self.riders[riderTuple[1]]
-
-            costPick1FirstDrop1First = getPathWeight([driver.location, rider1.sourceLocation, rider2.sourceLocation,
-                                                     rider1.targetLocation, rider2.targetLocation], self.distNorm)
-            costPick1FirstDrop2First = getPathWeight([driver.location, rider1.sourceLocation, rider2.sourceLocation,
-                                                      rider2.targetLocation, rider1.targetLocation], self.distNorm)
-            costPick2FirstDrop1First = getPathWeight([driver.location, rider2.sourceLocation, rider1.sourceLocation,
-                                                      rider1.targetLocation, rider2.targetLocation], self.distNorm)
-            costPick2FirstDrop2First = getPathWeight([driver.location, rider2.sourceLocation, rider1.sourceLocation,
-                                                      rider2.targetLocation, rider1.targetLocation], self.distNorm)
-
-            cost += min([costPick1FirstDrop1First, costPick1FirstDrop2First, costPick2FirstDrop1First,
-                         costPick2FirstDrop2First])
-
-        return cost
+        print("Graph Dimensions: %d| nDrivers: %d| Driver Capacity: %d| Generator Type: %d| "
+              "Generator Args"+str(self.generatorArgs) % (self.graphDim, self.nDrivers, self.nRiders,
+                                                          self.generatorType))
 
     # def generateGraph(self):
     #     G = nx.Graph()
