@@ -1,5 +1,3 @@
-import networkx as nx
-
 from Main.UtilClasses import Driver
 from OurAlg.TSP.Utils import getRequestLocation
 from OurAlg.Utils import getBoundedAssignmentWalks, getRequestGroupWalkCost
@@ -23,18 +21,6 @@ def checkAdjacency(nodeType1, nodeType2):
         if nodeType2 != "driver":
             return True
     return False
-
-
-def getMinWeightPerfectMatching(graph):
-
-    for _, _, data in graph.edges(data=True):
-        data["weight"] = -data["weight"]
-
-
-
-    matching = nx.algorithms.max_weight_matching(graph, maxcardinality=True)
-
-    return matching
 
 
 def getBestDriverRequestGroupCost(driver, requestGroup, distNorm="l2"):

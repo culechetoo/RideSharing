@@ -2,7 +2,8 @@ import networkx as nx
 from itertools import combinations
 
 from Main.UtilClasses import *
-from Main.Utils import getPathWeight, getMinWeightPerfectMatching, getBestDriverRequestGroupCost
+from Main.Utils import getPathWeight, getBestDriverRequestGroupCost
+from OurAlg.Matching.libMethods import networkxMatching
 
 
 def getBestRiderPairCostMax(rider1: Rider, rider2: Rider, distNorm):
@@ -67,7 +68,7 @@ def generateRiderPairGraph(problemInstance, edgeWeightFunction):
 def getRiderMatching(problemInstance, edgeWeightFunction):
 
     graph = generateRiderPairGraph(problemInstance, edgeWeightFunction)
-    matching = getMinWeightPerfectMatching(graph)
+    matching = networkxMatching(graph)
 
     finalMatching = []
 
@@ -111,7 +112,7 @@ def generateDriverRiderPairGraph(problemInstance, riderMatching):
 def getDriverRiderMatching(problemInstance, riderMatching):
 
     graph = generateDriverRiderPairGraph(problemInstance, riderMatching)
-    matching = getMinWeightPerfectMatching(graph)
+    matching = networkxMatching(graph)
 
     finalMatching = []
 

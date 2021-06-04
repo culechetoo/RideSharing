@@ -4,12 +4,13 @@ from itertools import combinations
 from typing import List, FrozenSet, Tuple
 
 import OurAlg.Utils
+from OurAlg.Matching.libMethods import networkxMatching
 from OurAlg.Utils import getDistRequestGroups
 from Main.UtilClasses import Rider as Request, Rider, Driver
 
 import networkx as nx
 
-from Main.Utils import getMinWeightPerfectMatching, getBestDriverRequestGroupCost
+from Main.Utils import getBestDriverRequestGroupCost
 
 
 def initPartition(problemInstance):
@@ -59,7 +60,7 @@ def getExactPartition(problemInstance, showRunTime=False):
             print("graph constructed in %f" % (time.time()-currTime))
 
         currTime = time.time()
-        matching = getMinWeightPerfectMatching(graph_i)
+        matching = networkxMatching(graph_i)
         if showRunTime:
             print("matching found in %f" % (time.time()-currTime))
 
@@ -99,7 +100,7 @@ def getDriverGroupGraph(problemInstance, partition: List[Tuple[Rider]]):
 
 def getDriverGroupMatching(problemInstance, partition):
     graph = getDriverGroupGraph(problemInstance, partition)
-    driverGroupMatching = getMinWeightPerfectMatching(graph)
+    driverGroupMatching = networkxMatching(graph)
 
     finalMatching = []
 

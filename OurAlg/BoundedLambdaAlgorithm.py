@@ -8,7 +8,7 @@ import networkx as nx
 
 import OurAlg.Utils
 from Main.UtilClasses import Rider, Driver
-from Main.Utils import getMinWeightPerfectMatching
+from OurAlg.Matching.libMethods import networkxMatching
 from OurAlg.Utils import getDistRequestGroupSets, mst
 
 
@@ -58,7 +58,7 @@ def getBoundedPartition(problemInstance):
         partitionSet_i: List[FrozenSet[FrozenSet[Rider]]] = []
 
         graph_i = constructPartitionSetGraph(partitionSetSet, problemInstance.distNorm)
-        matching = getMinWeightPerfectMatching(graph_i)
+        matching = networkxMatching(graph_i)
 
         for match in matching:
 
