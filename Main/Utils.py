@@ -1,5 +1,5 @@
 from Main.UtilClasses import Driver
-from OurAlg.TSP.Utils import getRequestLocation
+from OurAlg.tsp.Utils import getRequestLocation
 from OurAlg.Utils import getBoundedAssignmentWalks, getRequestGroupWalkCost
 
 

@@ -1,4 +1,4 @@
-from OurAlg.TSP.Utils import getRequestLocation
+from OurAlg.tsp.Utils import getRequestLocation
 
 
 def getPathNearestNeighbourRequestGroups(requestGroups, sourceLocation, distNorm="l2"):

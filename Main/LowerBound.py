@@ -6,8 +6,8 @@ from networkx import minimum_spanning_tree
 
 from Main.UtilClasses import Rider, Driver
 from Main.Utils import getPathWeight
-from OurAlg.TSP.BruteForce import getPathBruteForce
-from PrevPaper.Algorithm import getRiderMatching, getBestRiderPairCostMin
+from OurAlg.tsp.BruteForce import getPathBruteForce
+from PrevPaper.Algorithm import getRiderMatching
 
 
 def getMinRequestDriverSetDistance(request: Rider, drivers: List[Driver], distNorm="l2"):

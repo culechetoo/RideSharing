@@ -1,6 +1,6 @@
 from typing import List, Any, Callable
 
-from OurAlg.graphLib.BaseGraph import BaseGraph
+from graphLib.graph.BaseGraph import BaseGraph
 
 
 class GtGraph(BaseGraph):

@@ -1,6 +1,6 @@
 import itertools
 
-from OurAlg.TSP.Utils import getRequestLocation
+from OurAlg.tsp.Utils import getRequestLocation
 
 
 def getPathBruteForce(requests, sourceLocation, distNorm="l2"):

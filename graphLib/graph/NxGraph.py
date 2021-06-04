@@ -1,7 +1,7 @@
 import itertools
 from typing import List, Any, Callable
 
-from OurAlg.graphLib.BaseGraph import BaseGraph
+from graphLib.graph.BaseGraph import BaseGraph
 
 import networkx as nx
 

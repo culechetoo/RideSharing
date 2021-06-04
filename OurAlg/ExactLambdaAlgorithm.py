@@ -6,8 +6,7 @@ import OurAlg.Utils
 from OurAlg.Utils import getDistRequestGroups
 from Main.UtilClasses import Rider as Request, Rider
 
-import OurAlg.graphLib as graphLib
-import OurAlg.matchingLib as matchingLib
+import graphLib as graphLib
 
 from Main.Utils import getBestDriverRequestGroupCost
 
@@ -50,10 +49,10 @@ def getExactPartition(problemInstance, showRunTime=False):
             print("graphLib constructed in %f" % (time.time() - currTime))
 
         currTime = time.time()
-        matchingAlgorithm = matchingLib.getMatching(graphLibrary)
+        matchingAlgorithm = graphLib.getMatching(graphLibrary)
         matching = matchingAlgorithm(graph_i.getGraph())
         if showRunTime:
-            print("matchingLib found in %f" % (time.time() - currTime))
+            print("graphAlg found in %f" % (time.time() - currTime))
 
         for partitionIndex1, partitionIndex2 in matching:
             partition_i.append(partition[partitionIndex1].union(partition[partitionIndex2]))
@@ -85,7 +84,7 @@ def getDriverGroupGraph(problemInstance, partition: List[Tuple[Rider]]):
 
 def getDriverGroupMatching(problemInstance, partition):
     graph = getDriverGroupGraph(problemInstance, partition)
-    matchingAlgorithm = matchingLib.getMatching(graphLibrary)
+    matchingAlgorithm = graphLib.getMatching(graphLibrary)
     driverGroupMatching = matchingAlgorithm(graph.getGraph())
 
     finalMatching = []

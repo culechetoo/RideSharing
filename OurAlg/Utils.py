@@ -5,9 +5,9 @@ import networkx as nx
 from networkx import minimum_spanning_tree
 
 from Main.UtilClasses import Rider as Request, Location, Rider
-from OurAlg.TSP.NearestNeighbour import getPathNearestNeighbourRequests
+from OurAlg.tsp.NearestNeighbour import getPathNearestNeighbourRequests
 
-from OurAlg.TSP.BruteForce import getPathBruteForce
+from OurAlg.tsp.BruteForce import getPathBruteForce
 
 mstCache = {}
 
