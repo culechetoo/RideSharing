@@ -1,8 +1,16 @@
 import networkx as nx
 
 from Main.UtilClasses import Driver
-from OurAlg.Utils import getAssignmentCostUnbounded, getRequestGroupWalkCost
-import PrevPaper.Algorithm as prevPaper
+from OurAlg.TSP.Utils import getRequestLocation
+from OurAlg.Utils import getBoundedAssignmentWalks, getRequestGroupWalkCost
+
+
+def getPathWeight(path, distanceType):
+    totalWeight = 0
+    for i in range(len(path)-1):
+        totalWeight += path[i].getDistance(path[i+1], distanceType)
+
+    return totalWeight
 
 
 def checkAdjacency(nodeType1, nodeType2):
@@ -17,18 +25,12 @@ def checkAdjacency(nodeType1, nodeType2):
     return False
 
 
-def getPathWeight(path, distanceType):
-    totalWeight = 0
-    for i in range(len(path)-1):
-        totalWeight += path[i].getDistance(path[i+1], distanceType)
-
-    return totalWeight
-
-
 def getMinWeightPerfectMatching(graph):
 
-    for node1, node1, data in graph.edges(data=True):
+    for _, _, data in graph.edges(data=True):
         data["weight"] = -data["weight"]
+
+
 
     matching = nx.algorithms.max_weight_matching(graph, maxcardinality=True)
 
@@ -44,11 +46,35 @@ def getBestDriverRequestGroupCost(driver, requestGroup, distNorm="l2"):
     return edgeWeight
 
 
-def getMatchingCost(problemInstance, matching):
+def getTotalRequestServeTime(walks, distNorm="l2"):
 
-    if problemInstance.exact:
+    totalServeTime = 0
 
-        totalCost = 0.0
+    for walk in walks:
+
+        currLocation = walk[0].location
+        visited = set([])
+        runningCost = 0
+
+        for request in walk[1:]:
+            nextLocation = getRequestLocation(request, request in visited)
+            runningCost += currLocation.getDistance(nextLocation, distNorm)
+            currLocation = nextLocation
+            if request in visited:
+                totalServeTime += runningCost
+            visited.add(request)
+
+    return totalServeTime
+
+
+def getMatchingCosts(problemInstance, matching, exact=True, returnOtherCosts=False):
+
+    totalCost = 0.0
+    maxCost = 0.0
+
+    walks = []
+
+    if exact:
 
         for match in matching:
 
@@ -59,17 +85,23 @@ def getMatchingCost(problemInstance, matching):
                 riderTuple = match[1]
                 driver: Driver = match[0]
 
-            if problemInstance.driverCapacity == 2:
-                riderCost = prevPaper.getBestRiderPairCostMax(riderTuple[0], riderTuple[1], problemInstance.distNorm)
-            else:
-                riderCost = getRequestGroupWalkCost(riderTuple, driver.location, distNorm=problemInstance.distNorm)
-                # riderCost = 2*getOverallMst(riderTuple, problemInstance.distNorm)
+            walk, cost = getRequestGroupWalkCost(riderTuple, driver, distNorm=problemInstance.distNorm)
+            assert len(walk) == 1 + 2*problemInstance.driverCapacity
 
-            driverCost = getBestDriverRequestGroupCost(driver, riderTuple, problemInstance.distNorm)
-
-            totalCost += riderCost+driverCost
+            walks.append(walk)
+            totalCost += cost
+            maxCost = max(maxCost, cost)
 
     else:
-        totalCost = getAssignmentCostUnbounded(matching, problemInstance.distNorm)
+        walks, costs = getBoundedAssignmentWalks(matching, problemInstance.distNorm)
+        maxCost = max(costs)
+        totalCost = sum(costs)
 
-    return totalCost
+    assert len(walks) == problemInstance.nDrivers
+
+    totalServeTime = getTotalRequestServeTime(walks, problemInstance.distNorm)
+
+    if not returnOtherCosts:
+        return totalCost
+    else:
+        return totalCost, maxCost, totalServeTime
