@@ -4,10 +4,10 @@ from OurAlg.ExactLambdaAlgorithm import run as exactRun
 from OurAlg.BoundedLambdaAlgorithm import run as boundedRun
 
 
-def runInstance(problem, showRunTime=False):
+def runInstance(problem, exact=True, showRunTime=False):
     currTime = time.time()
 
-    if problem.exact:
+    if exact:
         matching = exactRun(problem, showRunTime)
     else:
         matching = boundedRun(problem, showRunTime)
