@@ -49,7 +49,7 @@ def constructPartitionSetGraph(partitionSets: List[FrozenSet[FrozenSet[Rider]]],
 
 
 def getBoundedPartition(problemInstance):
-    partitionSetSets: List[List[FrozenSet[FrozenSet[Rider]]]] = [initPartitionSet(problemInstance)]
+    partitionSetSet: List[FrozenSet[FrozenSet[Rider]]] = initPartitionSet(problemInstance)
 
     i = 0
 
@@ -57,7 +57,7 @@ def getBoundedPartition(problemInstance):
         i += 1
         partitionSet_i: List[FrozenSet[FrozenSet[Rider]]] = []
 
-        graph_i = constructPartitionSetGraph(partitionSetSets[-1], problemInstance.distNorm)
+        graph_i = constructPartitionSetGraph(partitionSetSet, problemInstance.distNorm)
         matching = getMinWeightPerfectMatching(graph_i)
 
         for match in matching:
@@ -67,8 +67,8 @@ def getBoundedPartition(problemInstance):
             group1 = attr["groups"][0]
             group2 = attr["groups"][1]
 
-            groupSet1: Set[FrozenSet[Rider]] = set(partitionSetSets[-1][match[0]])
-            groupSet2: Set[FrozenSet[Rider]] = set(partitionSetSets[-1][match[1]])
+            groupSet1: Set[FrozenSet[Rider]] = set(partitionSetSet[match[0]])
+            groupSet2: Set[FrozenSet[Rider]] = set(partitionSetSet[match[1]])
 
             if attr["method"] == "w1":
                 if group1 in groupSet1:
@@ -83,9 +83,9 @@ def getBoundedPartition(problemInstance):
             elif attr["method"] == "w2":
                 partitionSet_i.append(frozenset(groupSet1.union(groupSet2)))
 
-        partitionSetSets.append(partitionSet_i)
+        partitionSetSet = partitionSet_i
 
-    partition = [tuple(requestGroup) for requestGroupSet in partitionSetSets[-1] for requestGroup in requestGroupSet]
+    partition = [tuple(requestGroup) for requestGroupSet in partitionSetSet for requestGroup in requestGroupSet]
 
     return partition
 
