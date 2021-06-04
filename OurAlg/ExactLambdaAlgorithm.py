@@ -45,7 +45,7 @@ def constructPartitionGraph(partitions: List[FrozenSet[Request]], distNorm="l2")
 
 def getExactPartition(problemInstance, showRunTime=False):
 
-    partitions: List[List[FrozenSet[Request]]] = [initPartition(problemInstance)]
+    partition: List[FrozenSet[Request]] = initPartition(problemInstance)
 
     i = 0
 
@@ -54,7 +54,7 @@ def getExactPartition(problemInstance, showRunTime=False):
         partition_i: List[FrozenSet[Request]] = []
 
         currTime = time.time()
-        graph_i = constructPartitionGraph(partitions[-1], problemInstance.distNorm)
+        graph_i = constructPartitionGraph(partition, problemInstance.distNorm)
         if showRunTime:
             print("graph constructed in %f" % (time.time()-currTime))
 
@@ -64,13 +64,11 @@ def getExactPartition(problemInstance, showRunTime=False):
             print("matching found in %f" % (time.time()-currTime))
 
         for partitionIndex1, partitionIndex2 in matching:
-            partition_i.append(partitions[-1][partitionIndex1].union(partitions[-1][partitionIndex2]))
+            partition_i.append(partition[partitionIndex1].union(partition[partitionIndex2]))
 
-        partitions.append(partition_i)
+        partition = partition_i
 
-    exactPartition = partitions[-1]
-
-    exactPartition = [tuple(requestGroup) for requestGroup in exactPartition]
+    exactPartition = [tuple(requestGroup) for requestGroup in partition]
 
     return exactPartition
 
