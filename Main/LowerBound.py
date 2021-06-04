@@ -6,6 +6,7 @@ from networkx import minimum_spanning_tree
 
 from Main.UtilClasses import Rider, Driver
 from Main.Utils import getPathWeight
+from OurAlg.TSP.BruteForce import getPathBruteForce
 from PrevPaper.Algorithm import getRiderMatching, getBestRiderPairCostMin
 
 
@@ -78,6 +79,9 @@ def getDriverRiderBipartiteGraph(problemInstance):
     driverNodes = {node for node, d in graph.nodes(data=True) if d["bipartite"] == 0}
     riderNodes = {node for node, d in graph.nodes(data=True) if d["bipartite"] == 1}
 
+    assert len(driverNodes) == problemInstance.nDrivers
+    assert len(riderNodes) == problemInstance.nRiders
+
     for driverNode in driverNodes:
         driver: Driver = problemInstance.drivers[driverNode]
         for riderNode in riderNodes:
@@ -98,6 +102,7 @@ def getDriverRiderMatching(problemInstance):
 def calcDriverRiderMatchingCost(problemInstance, matching):
 
     matchingCost = 0.0
+
     for node in matching.keys():
         if node < problemInstance.nDrivers:
             driver: Driver = problemInstance.drivers[node]
@@ -108,12 +113,18 @@ def calcDriverRiderMatchingCost(problemInstance, matching):
     return matchingCost
 
 
+def getBestRiderPairCost(rider_i, rider_j, distNorm="l2"):
+
+    return min(getPathBruteForce((rider_i, rider_j), rider_i.sourceLocation, distNorm)[1],
+               getPathBruteForce((rider_i, rider_j), rider_j.sourceLocation, distNorm)[1])
+
+
 def calcRiderMatchingCost(problemInstance, riderMatching):
     riderMatchingCost = 0.0
     for riderPair in riderMatching:
         rider_i: Rider = riderPair[0]
         rider_j: Rider = riderPair[1]
-        riderMatchingCost += getBestRiderPairCostMin(rider_i, rider_j, problemInstance.distNorm)
+        riderMatchingCost += getBestRiderPairCost(rider_i, rider_j, problemInstance.distNorm)
 
     return riderMatchingCost
 
@@ -123,7 +134,7 @@ def getLowerBoundCost(problemInstance):
     lamb = problemInstance.driverCapacity
 
     if lamb == 2:
-        riderMatching = getRiderMatching(problemInstance, getBestRiderPairCostMin)
+        riderMatching = getRiderMatching(problemInstance, getBestRiderPairCost)
         riderMatchingCost = calcRiderMatchingCost(problemInstance, riderMatching)
 
         driverRequestGroupMatching = getDriverRiderMatching(problemInstance)
