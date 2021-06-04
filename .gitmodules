@@ -1,0 +1,6 @@
+[submodule "ridesharing-LMD"]
+	path = ridesharing-LMD
+	url = https://github.com/BUAA-BDA/ridesharing-LMD
+[submodule "ridesharing-GreedyDP"]
+	path = ridesharing-GreedyDP
+	url = https://github.com/BUAA-BDA/ridesharing-GreedyDP
